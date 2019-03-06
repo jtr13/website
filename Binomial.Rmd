@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Visualizing the Binomial"
 author: "Joyce Robbins"
 date: "3/5/2019"
 output: 
@@ -13,7 +13,7 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 
 ```{r}
 library(tidyverse)
-last_flip_colors <- c("#00874F", "#67A9DF")
+colors <- c("#00874F", "#67A9DF")
 ```
 
 
@@ -23,85 +23,104 @@ What is the probability that you'll get an even number of heads if you flip a fa
 
 My go-to explanations are visual, so it bothered me that the visual for a binomial with n = 20, p = .5 does not clearly make the case that the probability, as you might guess, is .5:
 
-With R:  
-
-
 ```{r}
-sum(dbinom(seq(0, 20, 2), 20, .5))
-```
-
-Another approach: It is easier to see that the solution must be .5 for an odd number of flips, based on the symmetry of the binomial distribution. Let's start simple and graph the number of ways of getting 0, 1, 2, or 3 heads on 3 flips:
-```
-
-```{r}
-make_df <- function(n) {
-  data.frame(x = 0:n, 
-             ways = dbinom(0:n, n, .5)*(2^n), 
-             num_heads = ifelse((0:n) %% 2 == 0, "even", "odd"))
+ plot_even_odd <- function(n) {
+  data.frame(x = 0:n, prob = dbinom(0:n, n, .5),
+             num_heads = ifelse((0:n) %% 2 == 0, "even", "odd")) %>% 
+  
+  ggplot(aes(x, prob, fill = num_heads)) + geom_col() +
+    scale_x_discrete(limits = 0:n) +
+  ggtitle(paste0("Binomial Distribution n = ", n, ", p = .5"))
 }
 
-df3 <- make_df(3)
-
-ggplot(df3, aes(x, ways, fill = num_heads)) + geom_col() +
-  ggtitle("Number of ways of getting X heads on 3 flips")
+plot_even_odd(20)
 ```
 
+There are 11 ways to get an even number of heads and 10 ways to get an odd number of heads: it is not immediately evident that the length of the even bars is equal to that of the odd bars.
 
-
-Clearly, odd and even are identical, and therefore the probability of either is 1/2.
-
-With 4 flips, it's not quite so obvious that the number of ways to get an even number of heads {0, 2, or 4} is the same as the number of ways of getting an odd number of heads {1 or 3}:
-
+The question is much simpler for n = 19:
 
 ```{r}
-df4 <- make_df(4)
-ggplot(df4, aes(x, ways, fill = num_heads)) + geom_col() +
-  ggtitle("Number of ways of getting X heads on 4 flips")
+plot_even_odd(19)
+```
+
+Every even number of heads bar matches with an odd number of heads bar: $P(X = 9) = P(X = 10)$, $P(X = 8) = P(X = 11)$, and so on. Therefore, the probability of each is .5. Now let's return to $n = 20$. We know that the number of arrangements of heads and tails for $n = 20$ is:
+
+`last flip tails`: all of the arrangements for 19 flips + "T" --> same number of heads as with 19 flips
+
+`last flip heads`: all of the arrangements for 19 flips + "H" --> one more heads than with 19 flips 
+
+Since with $n = 20$ we have twice as many arrangements as with n = 19, the probability for each individual arrangement ending with "T" or "H" is half of what it was for $n = 19$.
+
+Graphically we can show the distribution of $n = 20$ as that of n = 19 plus the additional flip:
+
+```{r}
+df20a <-
+  data.frame(x = 1:20,
+             prob = dbinom(0:19, 19, .5) / 2,
+             fill = "last flip = heads")
+
+df20b <-
+  data.frame(x = 0:19,
+             prob = dbinom(0:19, 19, .5) / 2,
+             fill = "last flip = tails")
+  
+
+df20 <- rbind(df20a, df20b) 
+
+df20 %>%
+  ggplot(aes(x, prob, fill = fill)) + geom_col() +
+  facet_wrap( ~ fill, ncol = 1) +
+  guides(fill = FALSE) +
+  ggtitle("Binomial n = 20, shown as n = 19 + last flip")
 
 ```
 
+Combining the two, we have:
 
-But let's look at it another way. The number of different ways of flipping 4 coins is double the number of ways of flipping 3 coins. The outcomes can be summarized as:
-
-outcomes for 3 flips + "T" --> same number of heads as with 3 flips
-
-outcomes for 3 flips + "H" --> one more heads than with 3 flips 
-Graphically we have:
-
-```{r, fig.width = 5}
-df4H <- df3 %>% mutate(x = x + 1, last_flip = "H")
-df4T <- df3 %>% mutate(last_flip = "T")
-df4new <- rbind(df4H, df4T) %>% 
-  mutate(last_flip = fct_relevel(last_flip, "T")) 
-
-g <- ggplot(df4new, aes(x, ways, fill = last_flip)) + geom_col() +
-  ggtitle("Number of ways of getting X heads on 4 flips",
-          sub = "shown as number of ways of getting X heads on 3 flips + 1 more flip") +
-  scale_fill_manual(values = last_flip_colors)
+```{r}
+df20 %>%
+  ggplot(aes(x, prob, fill = fill)) + geom_col() +
+  annotate("text", x = 11, y = .036, label = "X") +
+  annotate("text", x = 12, y = .084, label = "X") +
+  ggtitle("Binomial n = 20, fill = last flip")
 ```
 
+How does this help? We know that the area of the red bars is the same as the area of the blue bars. We also know that every blue bar matches with a red bar to its right--see for example the pair marked with X's--since they represent the same arrangements with the exception that the red one ends with a heads while the blue one ends with a tails. 
 
-The green represents the number of ways on getting X heads on 4 flips if the last flip is tails. It is the same as the distribution of getting X heads on 3 flips, since none of the counts increase if the last flip is tails. The blue represents the number of ways of getting X heads on 4 flips if the last flip is heads. It is the same as the distribution we had before shifted to the right. If you look carefully at the rectangles you'll see that both the even number of heads {0, 2, 4} are made up of 2 short and 2 long rectangles as are the odd number of heads {1, 3}.
+And one more time with a smaller n:
 
-The same pattern occurs for n = 20: we can think of it as two n = 19 distributions combined:
+```{r}
+df4a <-
+  data.frame(x = 1:4,
+             prob = dbinom(0:3, 3, .5) / 2,
+             fill = "last flip = heads")
 
+df4b <-
+  data.frame(x = 0:3,
+             prob = dbinom(0:3, 3, .5) / 2,
+             fill = "last flip = tails")
+  
 
+df4 <- rbind(df4a, df4b) 
 
-```{r, fig.width = 5}
-df19 <- make_df(19)
-df20H <- df19 %>% mutate(x4 = x + 1, last_flip = "H")
-df20T <- df19 %>% mutate(x4 = x, last_flip = "T")
-df20 <- rbind(df20H, df20T) %>% 
-  mutate(last_flip = factor(last_flip, levels = c("T", "H"))) 
-
-ggplot(df20, aes(x4, ways, fill = last_flip)) + geom_col() +
-  ggtitle("Number of ways of getting X heads on 20 flips",
-          sub = "shown as # of ways of getting X heads on 19 flips + 1 more flip")  + 
-  scale_fill_manual(values = last_flip_colors) +
-  xlab("number of heads")
+df4 %>%
+  ggplot(aes(x, prob, fill = fill)) + geom_col() +
+  facet_wrap( ~ fill, ncol = 1) +
+  guides(fill = FALSE) +
+  ggtitle("Binomial n = 4, shown as n = 3 + last flip")
 ```
 
+Or:
 
-If you look carefully you'll see that the rectangles for the even number of heads (Ben wins) match with the rectangles for the odd number of heads (Annie wins) and therefore the probability of Ben winning is 1/2.
+```{r}
+df4 %>%
+  ggplot(aes(x, prob, fill = fill)) + geom_col() +
+  ggtitle("Binomial n = 4, fill = last flip")
+```
+
+Are you convinced that the probability of getting an even number of heads is always 50%?
+
+
 
 
