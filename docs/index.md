@@ -1,3 +1,3 @@
-[Visualizing the Binomial](Binomial.html)
+[Understanding the Binomial Recursively](Binomial.html)
 
-[Animating the Binomial](Binanimate.html)
+[Animation: Building the Binomial Recursively](Binanimate.html)
