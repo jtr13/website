@@ -1,5 +1,5 @@
 ---
-title: "Animating the Binomial"
+title: "Animation: Building the Binomial Recursively"
 author: "Joyce Robbins"
 date: "3/5/2019"
 output: 
@@ -12,39 +12,81 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE,
                       warning = FALSE)
 ```
 
-```{r}
+```{r make_df}
 library(tidyverse)
 library(gganimate)
 make_df <- function(n) {
-  a1 <- data.frame(x = 0:n,
-                   size = n,
-                   prob = dbinom(0:n, n, .5),
-                   ways = dbinom(0:n, n, .5)*2^n,
-                   stage = n,
-                   group = 1:(n+1),
-                   fill = "n")
-
-  a2 <- a1 %>% mutate(stage = n + .5, fill = "last flip tails", prob = prob /2)
-
-  b <- data.frame(x = (0:n) + 1,
-                  size = n,
-                  prob = dbinom(0:n, n, .5)/2,
-                  ways = dbinom(0:n, n, .5)*2^n,
-                  stage = n + .5,
-                  group = 1:(n+1),
-                  fill = "last flip heads")
-
-  rbind(a1, a2, b)
+  heads <- tibble(
+    x = 1:(n + 1),
+    size = n + 1,
+    prob = dbinom(0:n, n, .5) / 2,
+    stage = n + .5,
+    group = 1:(n + 1),
+    fill = "p(x-1) n trials",
+    column = "n"
+  )
+  
+  tails <- tibble(
+    x = 0:n,
+    size = n + 1,
+    prob = dbinom(0:n, n, .5) / 2,
+    stage = n + .5,
+    group = 1:(n + 1),
+    fill = "p(x) n trials",
+    column = "n"
+  )
+  
+  all <- tibble(
+    x = 0:n,
+    size = n,
+    prob = dbinom(0:n, n, .5),
+    stage = n,
+    group = 1:(n + 1),
+    fill = "p(x) n+1 trials",
+    column = "n + 1"
+  )
+  
+  rbind(heads, tails, all) %>% 
+    mutate(fill = fct_relevel(fill, "all", after = Inf))
+  
 }
 
+num <- 10
 
-df <- purrr::map_df(1:10, make_df)
+df <- purrr::map_dfr(1:num, make_df)
+```
 
-g <- ggplot(df, aes(x, prob, fill = fill , group = group)) + geom_col() + scale_fill_manual(values = c("purple", "red", "blue"))
 
-anim <- g + transition_states(stage) + exit_recolor(fill = "purple")
+If $p=.5$, half of $P(X=x) + (P = x-1)$ for $n$ trials gives us $(P = x)$ for $n+1$ trials. (For a more thorough explanation on why this is true, see [Understandng the Binomial Recursively](https://jtr13.github.io/website/Binomial.html).)
 
-animate(anim)
+That is,
 
+$$\frac{b(x; n, .5)}{2} + \frac{b(x-1; n, .5)}{2} = b(x; n+1, .5)$$
+
+This animation demonstrates this recursion visually for $n = 2$ to $n = `r num`$: the red and blue represent half of the probabilities for $n$ trials, while the purple bars represent the binomial probabilities for $n+1$ trials. (Note that the blue bars are half the height of the purple bars--the $x's$ are the same so the purple bars shrink into the blue ones for $n+1$ trials.)
+
+
+```{r animation}
+g <-
+  ggplot(df, aes(x, prob, fill = fill, group = group)) +
+  geom_col() + 
+  scale_fill_manual(values = c("red", "blue", "purple"))
+
+anim <- 
+  g + transition_states(stage) + exit_recolor(fill = "purple")
+
+animate(anim, fps = 5)
+
+```
+
+Animations can be hard to digest, so here's a static version:
+
+
+```{r static, fig.height = 10}
+df %>% filter(size != 1, size != max(size)) %>% 
+  ggplot(aes(x, prob, fill = fill)) +
+  geom_col() +
+  scale_fill_manual(values = c("red", "blue", "purple")) +
+  facet_grid(size ~ column)
 ```
 

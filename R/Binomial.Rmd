@@ -1,5 +1,5 @@
 ---
-title: "Visualizing the Binomial"
+title: "Understandng the Binomial Recursively"
 author: "Joyce Robbins"
 date: "3/5/2019"
 output: 
@@ -16,12 +16,9 @@ library(tidyverse)
 colors <- c("#00874F", "#67A9DF")
 ```
 
-
-## Visualizing the Binomial Distribution {-}
-
 What is the probability that you'll get an even number of heads if you flip a fair coin 20 times?
 
-My go-to explanations are visual, so it bothered me that the visual for a binomial with n = 20, p = .5 does not clearly make the case that the probability, as you might guess, is .5:
+My go-to explanations are visual, so it bothered me that the visual for a binomial with $n = 20, p = .5$ does not clearly make the case that the probability, as you might guess, is .5:
 
 ```{r}
  plot_even_odd <- function(n) {
@@ -38,21 +35,25 @@ plot_even_odd(20)
 
 There are 11 ways to get an even number of heads and 10 ways to get an odd number of heads: it is not immediately evident that the length of the even bars is equal to that of the odd bars.
 
-The question is much simpler for n = 19:
+The question is much simpler for $n = 19$:
 
 ```{r}
 plot_even_odd(19)
 ```
 
-Every even number of heads bar matches with an odd number of heads bar: $P(X = 9) = P(X = 10)$, $P(X = 8) = P(X = 11)$, and so on. Therefore, the probability of each is .5. Now let's return to $n = 20$. We know that the number of arrangements of heads and tails for $n = 20$ is:
+Every red bar (even number of heads) matches with a blue bar (odd number of heads): $P(X = 9) = P(X = 10)$, $P(X = 8) = P(X = 11)$, and so on. Therefore, the probability of all the reds or all the blues is .5. Now let's return to $n = 20$. We know that the number of arrangements of heads and tails for $n = 20$ is:
 
 `last flip tails`: all of the arrangements for 19 flips + "T" --> same number of heads as with 19 flips
 
 `last flip heads`: all of the arrangements for 19 flips + "H" --> one more heads than with 19 flips 
 
-Since with $n = 20$ we have twice as many arrangements as with n = 19, the probability for each individual arrangement ending with "T" or "H" is half of what it was for $n = 19$.
+Since with $n = 20$ we have twice as many arrangements as with $n = 19$, the probability for each individual arrangement ending with "T" or "H" is half of what it was for $n = 19$.
 
-Graphically we can show the distribution of $n = 20$ as that of n = 19 plus the additional flip:
+In general, 
+
+$$\frac{b(x; n, .5)}{2} + \frac{b(x-1; n, .5)}{2} = b(x; n+1, .5)$$
+
+Graphically we can show the distribution of $n = 20$ as that of $n = 19$ plus the additional flip:
 
 ```{r}
 df20a <-
@@ -85,6 +86,7 @@ df20 %>%
   annotate("text", x = 12, y = .084, label = "X") +
   ggtitle("Binomial n = 20, fill = last flip")
 ```
+
 
 How does this help? We know that the area of the red bars is the same as the area of the blue bars. We also know that every blue bar matches with a red bar to its right--see for example the pair marked with X's--since they represent the same arrangements with the exception that the red one ends with a heads while the blue one ends with a tails. 
 
