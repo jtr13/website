@@ -1,5 +1,5 @@
 ---
-title: "Understandng the Binomial Recursively"
+title: "Understanding the Binomial Recursively"
 author: "Joyce Robbins"
 date: "3/5/2019"
 output: 
