@@ -16,48 +16,58 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE,
 library(tidyverse)
 library(gganimate)
 make_df <- function(n) {
-  heads <- tibble(
-    x = 1:(n + 1),
-    size = n + 1,
-    prob = dbinom(0:n, n, .5) / 2,
-    stage = n + .5,
-    group = 1:(n + 1),
-    fill = "p(x-1) n trials",
-    column = "n"
-  )
   
-  tails <- tibble(
+    all <- tibble(
     x = 0:n,
-    size = n + 1,
-    prob = dbinom(0:n, n, .5) / 2,
-    stage = n + .5,
+    size = paste("n =", n),
+    prob = dbinom(0:n, n, .5),
+    stage = paste("n =", n),
     group = 1:(n + 1),
     fill = "p(x) n trials",
     column = "n"
   )
   
-  all <- tibble(
-    x = 0:n,
-    size = n,
-    prob = dbinom(0:n, n, .5),
-    stage = n,
+  heads <- tibble(
+    x = 1:(n + 1),
+    size = paste("n =", n + 1),
+    prob = dbinom(0:n, n, .5) / 2,
+    stage = paste("n =", n, "transitioning to n =", n + 1),
     group = 1:(n + 1),
-    fill = "p(x) n+1 trials",
-    column = "n + 1"
+    fill = "p(x-1) n-1 trials",
+    column = "n - 1"
   )
   
-  rbind(heads, tails, all) %>% 
-    mutate(fill = fct_relevel(fill, "all", after = Inf))
+  tails <- tibble(
+    x = 0:n,
+    size = paste("n =", n + 1),
+    prob = dbinom(0:n, n, .5) / 2,
+    stage = paste("n =", n, "transitioning to n =", n + 1),
+    group = 1:(n + 1),
+    fill = "p(x) n-1 trials",
+    column = "n - 1"
+  )
   
+  rbind(all, heads, tails) %>%
+    mutate(
+      fill = fct_relevel(
+        factor(fill),
+        "p(x-1) n-1 trials",
+        "p(x) n-1 trials",
+        "p(x) n trials"
+      ),
+      column = fct_relevel(column, "n - 1")
+    )
 }
 
-num <- 10
+num <- 12
 
-df <- purrr::map_dfr(1:num, make_df)
+df <- purrr::map_dfr(1:num, make_df) %>% 
+  mutate(size = factor(size, levels = unique(size)),
+         stage = factor(stage, levels = unique(stage)))
 ```
 
 
-If $p=.5$, half of $P(X=x) + (P = x-1)$ for $n$ trials gives us $(P = x)$ for $n+1$ trials. (For a more thorough explanation on why this is true, see [Understandng the Binomial Recursively](https://jtr13.github.io/website/Binomial.html).)
+If $p=.5$, half of the sume of $P(X=x) + (P = x-1)$ for $n$ trials gives us $(P = x)$ for $n+1$ trials. (For a more thorough explanation on why this is true, see [Understandng the Binomial Recursively](https://jtr13.github.io/website/Binomial.html).)
 
 That is,
 
@@ -70,7 +80,9 @@ This animation demonstrates this recursion visually for $n = 2$ to $n = `r num`$
 g <-
   ggplot(df, aes(x, prob, fill = fill, group = group)) +
   geom_col() + 
-  scale_fill_manual(values = c("red", "blue", "purple"))
+  scale_fill_manual(values = c("red", "blue", "purple")) +
+  labs(title = 'Binomial Distribution: {closest_state}', y = 'probability') + theme(legend.position = "bottom", 
+                                                                                    legend.title = element_blank())
 
 anim <- 
   g + transition_states(stage) + exit_recolor(fill = "purple")
@@ -83,10 +95,17 @@ Animations can be hard to digest, so here's a static version:
 
 
 ```{r static, fig.height = 10}
-df %>% filter(size != 1, size != max(size)) %>% 
+df %>% 
+  mutate(sizenum = parse_number(as.character(size))) %>% 
+  filter(sizenum != 1, sizenum != max(sizenum)) %>% 
   ggplot(aes(x, prob, fill = fill)) +
   geom_col() +
+  scale_x_continuous(breaks = 0:max(df$x)) +
   scale_fill_manual(values = c("red", "blue", "purple")) +
-  facet_grid(size ~ column)
+  facet_grid(size ~ column) + 
+  ggtitle("Binomial distribution") +
+  theme(legend.position = "bottom", 
+        legend.title = element_blank())
 ```
 
+[Back](https://jtr13.github.io/website/)
