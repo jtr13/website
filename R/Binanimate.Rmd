@@ -67,7 +67,7 @@ df <- purrr::map_dfr(1:num, make_df) %>%
 ```
 
 
-If $p=.5$, half of the sume of $P(X=x) + (P = x-1)$ for $n$ trials gives us $(P = x)$ for $n+1$ trials. (For a more thorough explanation on why this is true, see [Understandng the Binomial Recursively](https://jtr13.github.io/website/Binomial.html).)
+If $p=.5$, half of the sum of $P(X=x) + (P = x-1)$ for $n$ trials gives us $(P = x)$ for $n+1$ trials. (For a more thorough explanation on why this is true, see [Understandng the Binomial Recursively](https://jtr13.github.io/website/Binomial.html).)
 
 That is,
 
