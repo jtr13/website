@@ -67,7 +67,7 @@ df20b <-
              fill = "last flip = tails")
   
 
-df20 <- rbind(df20a, df20b) 
+df20 <- rbind(df20a, df20b) %>% mutate(x = factor(x))
 
 df20 %>%
   ggplot(aes(x, prob, fill = fill)) + geom_col() +
@@ -84,11 +84,21 @@ df20 %>%
   ggplot(aes(x, prob, fill = fill)) + geom_col() +
   annotate("text", x = 11, y = .036, label = "X") +
   annotate("text", x = 12, y = .084, label = "X") +
-  ggtitle("Binomial n = 20, fill = last flip")
+  ggtitle("Binomial n = 20, fill = last flip") + 
+  theme(legend.position = "bottom", legend.title = element_blank())
 ```
 
+How does this help? We know that the area of the red bars is the same as the area of the blue bars. We also know that every blue bar matches with a red bar to its right--see for example the pair marked with X's--since they represent the same arrangements with the exception that the red one ends with a heads while the blue one ends with a tails.
 
-How does this help? We know that the area of the red bars is the same as the area of the blue bars. We also know that every blue bar matches with a red bar to its right--see for example the pair marked with X's--since they represent the same arrangements with the exception that the red one ends with a heads while the blue one ends with a tails. 
+Thus we have matching sets of bars, one odd and one even, so the probability of either is one half:
+
+```{r}
+df20 %>%
+  ggplot(aes(x, prob, fill = factor(as.integer(x) + as.integer(fill)))) + 
+  geom_col() +
+  ggtitle("Binomial n = 20") + 
+  scale_fill_manual(values = c('#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666', '#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666', '#1b9e77','#d95f02','#7570b3','#e7298a')) + guides(fill = FALSE) 
+```
 
 And one more time with a smaller n:
 
@@ -121,8 +131,21 @@ df4 %>%
   ggtitle("Binomial n = 4, fill = last flip")
 ```
 
-Are you convinced that the probability of getting an even number of heads is always 50%?
+Matching pairs:
 
+```{r}
+df4 %>%
+  mutate(label = ifelse(as.integer(x) %% 2 == 0, "even", "odd")) %>% 
+  ggplot(aes(x, prob, fill = factor(as.integer(x) + as.integer(fill)), label = label)) + 
+  geom_col() + 
+  geom_text(position = position_stack(vjust = 0.5)) +
+  ggtitle("Binomial n = 4") + 
+  scale_fill_manual(values = c('#1b9e77', '#d95f02', '#7570b3', '#e7298a')) +
+    guides(fill = FALSE) 
+```
 
+Are you convinced that the probability of getting an even number of heads is equal to the probability of getting an odd number of heads and therefore equal to 50%?
+
+[Back](https://jtr13.github.io/website/)
 
 
