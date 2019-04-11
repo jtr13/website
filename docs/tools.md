@@ -1,3 +1,3 @@
 ## Web publishing
 
-Add a table of contents to GitHub documents: https://ecotrust-canada.github.io/markdown-toc/
+Add a table of contents to GitHub documents: [https://ecotrust-canada.github.io/markdown-toc/](https://ecotrust-canada.github.io/markdown-toc/)
